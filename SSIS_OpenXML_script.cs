@@ -1,8 +1,17 @@
 /* Microsoft SQL Server Integration Services Script Component
 *  Write scripts using Microsoft Visual C# 2008.
 *  ScriptMain is the entry point class of the script.*/
-using System;using System.Collections.Generic;using System.Data;using System.Linq;using Microsoft.SqlServer.Dts.Pipeline.Wrapper;using Microsoft.SqlServer.Dts.Runtime.Wrapper;using DocumentFormat.OpenXml.Packaging;using DocumentFormat.OpenXml.Spreadsheet;using DocumentFormat.OpenXml;
-[Microsoft.SqlServer.Dts.Pipeline.SSISScriptComponentEntryPointAttribute]public class ScriptMain : UserComponent
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using Microsoft.SqlServer.Dts.Pipeline.Wrapper;
+using Microsoft.SqlServer.Dts.Runtime.Wrapper;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml;
+[Microsoft.SqlServer.Dts.Pipeline.SSISScriptComponentEntryPointAttribute]
+public class ScriptMain : UserComponent
 {
     #region Script Setup
     // Ensure you've set up output columns and supplied an Excel Connection Manager in the Script Editor UI
@@ -10,7 +19,7 @@ using System;using System.Collections.Generic;using System.Data;using System.Lin
     /// Set the following variable value to the name of the table in Excel.  To find or set the name of the table in Excel,
     /// go to the Design ribbon in the Table Tools group.  The table name is shown on the left side.
     /// </summary>
-    private static readonly string ExcelTableName = "CompanyDefs";
+    private static readonly string ExcelTableName = "IF - COA - LNS - Centnl";
     /// <summary>
     /// Set this variable to true if you want copious reporting done (for debugging)
     /// </summary>
@@ -22,20 +31,30 @@ using System;using System.Collections.Generic;using System.Data;using System.Lin
     {
         // sample:
         // this.MapColumn("Excel Column Header", "SSIS Column Name", typeof(string));
-        this.MapColumn("Sample Excel Column", "SSIS Column", typeof(string), true);    }
+        this.MapColumn("FA", "FA", typeof(string), true);
+        this.MapColumn("USID", "USID", typeof(int), true);
+        this.MapColumn("OOF VENDOR TYPE", "OOF_Vendor_Type", typeof(string), true);
+        this.MapColumn("ECD", "ECD", typeof(string), true);
+        this.MapColumn("Revised ECD", "Revised_ECD", typeof(string), true);
+        this.MapColumn("ACD", "ACD", typeof(string), true);
+        this.MapColumn("ACD 2", "ACD_2", typeof(string), true);
+        this.MapColumn("Reported", "Reported", typeof(string), true);
+    }
     #endregion
 
     #region Code You Don't Touch
     // The following code is configured based on the information you supplied in the section above,
     // and what columns and connection in the Script Editor UI.
     private const string SCRIPT_NAME = "OpenXML API Script Source for SpreadsheetML";
-    private const string LAST_UPDATED = "2012-06-06 23:14";
+    private const string LAST_UPDATED = "2013-11-20 23:50";
     private static bool __script_last_updated_logged = false;
     private static IDTSComponentMetaData100 __metadata;
     /// <summary>
     /// The list of Excel to SSIS column maps
     /// </summary>
     private readonly List<ColumnMapping> _columnMappings = new List<ColumnMapping>();
+    #endregion
+
     #region CLASS: ColumnMapping
     private class ColumnMapping
     {
@@ -56,7 +75,7 @@ using System;using System.Collections.Generic;using System.Data;using System.Lin
         private readonly bool _treatBlanksAsNulls;
         #endregion
 
-        public NullSetteer SetNull;
+        public NullSetter SetNull;
         public StringSetter SetString;
         public Int32Setter SetInt;
         public DateTimeSetter SetDateTime;
@@ -474,7 +493,7 @@ using System;using System.Collections.Generic;using System.Data;using System.Lin
                                 {
                                     string cellValue = this.GetCellValue(cell, sharedStringTablePart);
                                     if ((cellValue == null)
-                                        || ((cellValue == "") &amp;&amp; columnRelationship.TreatBlanksAsNulls))
+                                        || ((cellValue == "") && columnRelationship.TreatBlanksAsNulls))
                                     {
                                         // do nothing
                                     }
@@ -527,7 +546,7 @@ using System;using System.Collections.Generic;using System.Data;using System.Lin
     private int[] CellReferenceToCoordinates(string cellReference)
     {
         //bool fireAgain = true;
-    t[] coordinates = new int[2];
+        t[] coordinates = new int[2];
 
         //ComponentMetaData.FireInformation(0, "", "CellRef: [" + cellReference + "]", "", 0, ref fireAgain);
         int index;
@@ -570,7 +589,7 @@ using System;using System.Collections.Generic;using System.Data;using System.Lin
         {
             return null;
         }
-        if ((cell.DataType != null) &amp;&amp; (cell.DataType == CellValues.SharedString))
+        if ((cell.DataType != null) && (cell.DataType == CellValues.SharedString))
         {
             return sharedStringTablePart.SharedStringTable.ChildElements[Int32.Parse(cell.CellValue.InnerText)].InnerText;
         }
@@ -613,6 +632,5 @@ using System;using System.Collections.Generic;using System.Data;using System.Lin
         ReportError("This script can't handle " + dataType.ToString() + " types.", true);
         throw new ArgumentException("This script can't handle " + dataType.ToString() + " types.");
     }
-    #endregion
     #endregion
 }
