@@ -1,18 +1,21 @@
 /* Microsoft SQL Server Integration Services Script Component
 *  Write scripts using Microsoft Visual C# 2008.
 *  ScriptMain is the entry point class of the script.*/
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Microsoft.SqlServer.Dts.Pipeline.Wrapper;
 using Microsoft.SqlServer.Dts.Runtime.Wrapper;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml;
+
 [Microsoft.SqlServer.Dts.Pipeline.SSISScriptComponentEntryPointAttribute]
 public class ScriptMain : UserComponent
 {
+
     #region Script Setup
     // Ensure you've set up output columns and supplied an Excel Connection Manager in the Script Editor UI
     /// <summary>
@@ -23,7 +26,7 @@ public class ScriptMain : UserComponent
     /// <summary>
     /// Set this variable to true if you want copious reporting done (for debugging)
     /// </summary>
-    private static readonly bool VerboseLogging = false;
+    private static readonly bool VerboseLogging = true;
     /// <summary>
     /// Fill this method with calls to MapColumn to map Excel column names to SSIS output columns, and provide data types.
     /// </summary>
@@ -33,8 +36,9 @@ public class ScriptMain : UserComponent
         // this.MapColumn("Excel Column Header", "SSIS Column Name", typeof(string));
         this.MapColumn("FA", "FA", typeof(string), true);
         this.MapColumn("USID", "USID", typeof(int), true);
-        this.MapColumn("OOF VENDOR TYPE", "OOF_Vendor_Type", typeof(string), true);
-        this.MapColumn("ECD", "ECD", typeof(string), true);
+        this.MapColumn("OOF_Vendor_Type", "OOF_Vendor_Type", typeof(string), true); // OOF VENDOR TYPE
+        // this.MapColumn("ECD", "ECD", typeof(string), true);
+        this.MapColumn("ECD", "ECD", typeof(int), true);
         this.MapColumn("Revised ECD", "Revised_ECD", typeof(string), true);
         this.MapColumn("ACD", "ACD", typeof(string), true);
         this.MapColumn("ACD 2", "ACD_2", typeof(string), true);
@@ -252,7 +256,7 @@ public class ScriptMain : UserComponent
     #endregion
 
     #region Sets up map from Excel column to an SSIS column
-    private void MapColumn(string excelColumnName, string ssisColumnName, System.Type dataType, bool treatBlanksAsNulls)
+    public void MapColumn(string excelColumnName, string ssisColumnName, System.Type dataType, bool treatBlanksAsNulls)
     {
         string methodName = "set_" + ssisColumnName.Replace(" ", "");
         VerboseLog("Creating " + dataType.ToString() + " mapping from '" + excelColumnName + "' to '" + ssisColumnName + "' via " + methodName);
@@ -546,7 +550,7 @@ public class ScriptMain : UserComponent
     private int[] CellReferenceToCoordinates(string cellReference)
     {
         //bool fireAgain = true;
-        t[] coordinates = new int[2];
+        int[] coordinates = new int[2];
 
         //ComponentMetaData.FireInformation(0, "", "CellRef: [" + cellReference + "]", "", 0, ref fireAgain);
         int index;
@@ -633,4 +637,31 @@ public class ScriptMain : UserComponent
         throw new ArgumentException("This script can't handle " + dataType.ToString() + " types.");
     }
     #endregion
+
+    //public override void PreExecute()
+    //{
+    //    base.PreExecute();
+    //    /*
+    //      Add your code here for preprocessing or remove if not needed
+    //    */
+    //}
+
+    //public override void PostExecute()
+    //{
+    //    base.PostExecute();
+    //    /*
+    //      Add your code here for postprocessing or remove if not needed
+    //      You can set read/write variables here, for example:
+    //      Variables.MyIntVar = 100
+    //    */
+    //}
+
+    //public override void CreateNewOutputRows()
+    //{
+    //    /*
+    //      Add rows by calling the AddRow method on the member variable named "<Output Name>Buffer".
+    //      For example, call MyOutputBuffer.AddRow() if your output was named "MyOutput".
+    //    */
+    //}
+
 }
