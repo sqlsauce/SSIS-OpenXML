@@ -22,7 +22,8 @@ public class ScriptMain : UserComponent
     /// Set the following variable value to the name of the table in Excel.  To find or set the name of the table in Excel,
     /// go to the Design ribbon in the Table Tools group.  The table name is shown on the left side.
     /// </summary>
-    private static readonly string ExcelTableName = "IF - COA - LNS - Centnl";
+    // private static readonly string ExcelTableName = "IF - COA - LNS - Centnl";
+    private static readonly string ExcelSheetName = "IF - COA - LNS - Centnl";
     /// <summary>
     /// Set this variable to true if you want copious reporting done (for debugging)
     /// </summary>
@@ -36,12 +37,12 @@ public class ScriptMain : UserComponent
         // this.MapColumn("Excel Column Header", "SSIS Column Name", typeof(string));
         this.MapColumn("FA", "FA", typeof(string), true);
         this.MapColumn("USID", "USID", typeof(int), true);
-        this.MapColumn("OOF_Vendor_Type", "OOF_Vendor_Type", typeof(string), true); // OOF VENDOR TYPE
-        // this.MapColumn("ECD", "ECD", typeof(string), true);
-        this.MapColumn("ECD", "ECD", typeof(int), true);
-        this.MapColumn("Revised ECD", "Revised_ECD", typeof(string), true);
+        this.MapColumn("OOF VENDOR TYPE", "OOFVendorType", typeof(string), true);
+        this.MapColumn("ECD", "ECD", typeof(string), true);
+        // this.MapColumn("ECD", "ECD", typeof(int), true);
+        this.MapColumn("Revised ECD", "RevisedECD", typeof(string), true);
         this.MapColumn("ACD", "ACD", typeof(string), true);
-        this.MapColumn("ACD 2", "ACD_2", typeof(string), true);
+        this.MapColumn("ACD 2", "ACD2", typeof(string), true);
         this.MapColumn("Reported", "Reported", typeof(string), true);
     }
     #endregion
@@ -262,13 +263,16 @@ public class ScriptMain : UserComponent
         VerboseLog("Creating " + dataType.ToString() + " mapping from '" + excelColumnName + "' to '" + ssisColumnName + "' via " + methodName);
         ColumnMapping mapping = new ColumnMapping(excelColumnName, ssisColumnName, dataType, treatBlanksAsNulls);
         #region Code to create delegates I'd have liked to have inside the ColumnMapping class itself if I could pass Output0Buffer...
+        VerboseLog("Creating delegate for " + methodName + "_IsNull");
         mapping.SetNull = (ColumnMapping.NullSetter)Delegate.CreateDelegate(typeof(ColumnMapping.NullSetter), Output0Buffer, methodName + "_IsNull");
         if (dataType == typeof(string))
         {
+            VerboseLog("Creating delegate for " + methodName + "string"); 
             mapping.SetString = (ColumnMapping.StringSetter)Delegate.CreateDelegate(typeof(ColumnMapping.StringSetter), Output0Buffer, methodName);
         }
         else if (dataType == typeof(int))
         {
+            VerboseLog("Creating delegate for " + methodName + "int");
             mapping.SetInt = (ColumnMapping.Int32Setter)Delegate.CreateDelegate(typeof(ColumnMapping.Int32Setter), Output0Buffer, methodName);
         }
         else if (dataType == typeof(DateTime))
@@ -394,74 +398,89 @@ public class ScriptMain : UserComponent
             //#endregion
             #endregion
             #region Iterate over sheets to find table
-            VerboseLog("Searching sheets for table '" + ExcelTableName + "'.");
-            Table table = null;
+            // VerboseLog("Searching sheets for table '" + ExcelTableName + "'.");
+            VerboseLog("Searching for sheet '" + ExcelSheetName + "'.");
+            // Table table = null;
             Worksheet worksheet = null;
             foreach (Sheet sheet in workbook.Workbook.Sheets)
             {
                 VerboseLog("Examining sheet '" + sheet.Name + "'.");
                 WorksheetPart worksheetPart = (WorksheetPart)document.WorkbookPart.GetPartById(sheet.Id);
-                foreach (TableDefinitionPart tableDefinitionPart in worksheetPart.TableDefinitionParts)
+                if (sheet.Name == ExcelSheetName)
                 {
-                    VerboseLog("Sheet contains table '" + tableDefinitionPart.Table.DisplayName + "'.");
-                    if (tableDefinitionPart.Table.DisplayName == ExcelTableName)
-                    {
-                        worksheet = worksheetPart.Worksheet;
-                        table = tableDefinitionPart.Table;
-                        VerboseLog("Sheet and table found.");
-                        break;
-                    }
-                }
-                if (table != null)
-                {
+                    worksheet = worksheetPart.Worksheet;
+                    VerboseLog("Sheet found.");
                     break;
                 }
+                //foreach (TableDefinitionPart tableDefinitionPart in worksheetPart.TableDefinitionParts)
+                //{
+                //    VerboseLog("Sheet contains table '" + tableDefinitionPart.Table.DisplayName + "'.");
+                //    if (tableDefinitionPart.Table.DisplayName == ExcelTableName)
+                //    {
+                //        worksheet = worksheetPart.Worksheet;
+                //        table = tableDefinitionPart.Table;
+                //        VerboseLog("Sheet and table found.");
+                //        break;
+                //    }
+                //}
+                //if (table != null)
+                //{
+                //    break;
+                //}
             }
             #endregion
-            if (table == null)
+            //if (table == null)
+            //{
+            //    ReportError("Table '" + ExcelTableName + "' wasn't found in '" + workbookFileName + "'.", true);
+            //}
+            //else
+            //{
+            //    string firstColumnHeader = "";
+            //    #region Find Excel Column Offsets
+            //    VerboseLog("Collecting column offsets for mapped columns.");
+            //    int columnIndex = 1;
+            //    foreach (TableColumn tableColumn in table.TableColumns)
+            //    {
+            //        if (columnIndex == 1)
+            //        {
+            //            firstColumnHeader = tableColumn.Name;
+            //        }
+            //        foreach (ColumnMapping columnRelationship in this._columnMappings)
+            //        {
+            //            if (tableColumn.Name == columnRelationship.ExcelColumnName)
+            //            {
+            //                VerboseLog("Found Excel column " + tableColumn.Name + " at offset " + columnIndex.ToString());
+            //                columnRelationship.ExcelColumnOffset = columnIndex;
+            //                break;
+            //            }
+            //        }
+            //        columnIndex++;
+            //    }
+            //    #region Throw an error if not all columns were found
+            //    foreach (ColumnMapping columnRelationship in this._columnMappings)
+            //    {
+            //        if (!columnRelationship.ExcelColumnFound)
+            //        {
+            //            string message = "Unable to locate column '" + columnRelationship.ExcelColumnName + "' in table '" + ExcelTableName + "'.";
+            //            ReportError(message, true);
+            //        }
+            //    }
+            //    #endregion
+            //    #endregion
+            if (worksheet == null)
             {
-                ReportError("Table '" + ExcelTableName + "' wasn't found in '" + workbookFileName + "'.", true);
+                ReportError("Sheet '" + ExcelSheetName + "' wasn't found in '" + workbookFileName + "'.", true);
             }
             else
             {
                 string firstColumnHeader = "";
-                #region Find Excel Column Offsets
-                VerboseLog("Collecting column offsets for mapped columns.");
-                int columnIndex = 1;
-                foreach (TableColumn tableColumn in table.TableColumns)
-                {
-                    if (columnIndex == 1)
-                    {
-                        firstColumnHeader = tableColumn.Name;
-                    }
-                    foreach (ColumnMapping columnRelationship in this._columnMappings)
-                    {
-                        if (tableColumn.Name == columnRelationship.ExcelColumnName)
-                        {
-                            VerboseLog("Found Excel column " + tableColumn.Name + " at offset " + columnIndex.ToString());
-                            columnRelationship.ExcelColumnOffset = columnIndex;
-                            break;
-                        }
-                    }
-                    columnIndex++;
-                }
-                #region Throw an error if not all columns were found
-                foreach (ColumnMapping columnRelationship in this._columnMappings)
-                {
-                    if (!columnRelationship.ExcelColumnFound)
-                    {
-                        string message = "Unable to locate column '" + columnRelationship.ExcelColumnName + "' in table '" + ExcelTableName + "'.";
-                        ReportError(message, true);
-                    }
-                }
-                #endregion
-                #endregion
                 #region Read spreadsheet data into SSIS output buffer
                 SheetData sheetData = worksheet.GetFirstChild<SheetData>();
                 IEnumerable<Row> rows = sheetData.Elements<Row>();
                 #region Find First Row
                 UInt32 firstRow = 0;
-                VerboseLog("Finding first row of table.");
+                // VerboseLog("Finding first row of table.");
+                VerboseLog("Finding first row of sheet.");
                 foreach (Row row in rows)
                 {
                     foreach (Cell cell in row.Elements<Cell>())
@@ -475,9 +494,11 @@ public class ScriptMain : UserComponent
                         }
                     }
                 }
-                VerboseLog("First row of table is on row " + firstRow.ToString() + ".");
+                // VerboseLog("First row of table is on row " + firstRow.ToString() + ".");
+                VerboseLog("First row of sheet is on row " + firstRow.ToString() + ".");
                 #endregion
-                VerboseLog("Preparing to read " + rows.Count<Row>().ToString() + " table rows from Excel.");
+                // VerboseLog("Preparing to read " + rows.Count<Row>().ToString() + " table rows from Excel.");
+                VerboseLog("Preparing to read " + rows.Count<Row>().ToString() + " sheet rows from Excel.");
                 foreach (Row row in rows)
                 {
                     VerboseLog("Reading row " + row.RowIndex.ToString() + ".");
